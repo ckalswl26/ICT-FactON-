@@ -1,8 +1,9 @@
-import { Claim, ClaimResult, EvidenceAssessment, EvidenceResult, PipelineDiagnostic } from "../types";
+import { Claim, ClaimResult, EvidenceAssessment, EvidenceIssue, EvidenceResult, PipelineDiagnostic } from "../types";
 import { searchPublicWeb, enrichWithFullText } from "./searchPublicWeb";
 import { verifyContextualPlaces } from "./verifyKoreanPlaces";
 import { verifyHighDoseCoffeeAdvice } from "./trustedEvidenceCatalog";
 import { verifyJuly2026TradeStatistics } from "./verifyTradeStatistics";
+import { verifyMinimumWage2027 } from "./verifyMinimumWage";
 import { verifyWithClaudeSearch } from "./verifyWithClaudeSearch";
 import { verifyWithGeminiSearch } from "./verifyWithGeminiSearch";
 import { verifyWithGemmaEvidence } from "./verifyWithGemmaEvidence";
@@ -12,9 +13,10 @@ export interface VerificationOutcome { result: ClaimResult; diagnostics: Pipelin
 const OLLAMA_URL=process.env.OLLAMA_BASE_URL||"http://127.0.0.1:11434"; const OLLAMA_MODEL=process.env.OLLAMA_MODEL||"qwen3:8b";
 
 export async function verifyClaim(claim:Claim,documentText=claim.text):Promise<VerificationOutcome>{
-  const local=verifyContextualPlaces(claim.text,documentText); if(local.length)return{result:conflict(claim,"문서에 등장한 행정구역 또는 기관 명칭이 공식 목록과 일치하지 않습니다.",local.flatMap(i=>i.sources)),diagnostics:[]};
-  const health=verifyHighDoseCoffeeAdvice(claim.text); if(health.length)return{result:conflict(claim,"건강·안전 권고와 일치하지 않는 표현이 확인됐습니다.",health.flatMap(i=>i.sources)),diagnostics:[]};
-  const trade=verifyJuly2026TradeStatistics(claim.text,documentText); if(trade.length)return{result:conflict(claim,"공식 무역 통계의 수치와 일치하지 않습니다.",trade.flatMap(i=>i.sources)),diagnostics:[]};
+  const local=verifyContextualPlaces(claim.text,documentText); if(local.length)return{result:conflict(claim,"문서에 등장한 행정구역 또는 기관 명칭이 공식 목록과 일치하지 않습니다.",local),diagnostics:[]};
+  const health=verifyHighDoseCoffeeAdvice(claim.text); if(health.length)return{result:conflict(claim,"건강·안전 권고와 일치하지 않는 표현이 확인됐습니다.",health),diagnostics:[]};
+  const trade=verifyJuly2026TradeStatistics(claim.text,documentText); if(trade.length)return{result:conflict(claim,"공식 무역 통계의 수치와 일치하지 않습니다.",trade),diagnostics:[]};
+  const minWage=verifyMinimumWage2027(claim.text,documentText); if(minWage.length)return{result:conflict(claim,"공식 고시된 최저임금 금액과 일치하지 않습니다.",minWage),diagnostics:[]};
 
   const claude=await verifyWithClaudeSearch(claim,documentText); if(claude.result)return{result:claude.result,diagnostics:[claude.diagnostic]};
   const usesGemma=(process.env.GEMINI_MODEL||"").startsWith("gemma-");
@@ -35,6 +37,17 @@ export async function verifyClaim(claim:Claim,documentText=claim.text):Promise<V
     const assessment=payload.assessment==="supported"||payload.assessment==="conflict"?payload.assessment:"insufficient"; return{result:{status:"evidence",claim,assessment,summary:payload.summary||"검색 자료와 주장을 비교했습니다.",problematicPart:assessment==="insufficient"?undefined:payload.problematicPart||undefined,correction:assessment==="insufficient"?undefined:payload.correction||undefined,sources:selected.map(({title,url})=>({title,url}))},diagnostics:[...aiDiagnostics,web.diagnostic,{stage:"local_ai",status:"ok",message:"로컬 AI가 검색 근거를 비교했습니다."}]};
   }catch(error){return{result:{status:"evidence",claim,assessment:"insufficient",summary:"AI 최종 판정은 완료되지 않았지만, 관련 공개 웹 자료를 찾아 확인할 수 있습니다.",sources:evidence.slice(0,6).map(({title,url})=>({title,url}))},diagnostics:[...aiDiagnostics,web.diagnostic,{stage:"local_ai",status:"failed",message:"로컬 AI 판정은 실패했지만 검색 출처는 정상적으로 표시합니다.",detail:errorMessage(error)}]};}
 }
-function conflict(claim:Claim,summary:string,sources:{title:string;url:string}[]):EvidenceResult{return{status:"evidence",claim,assessment:"conflict",summary,sources:[...new Map(sources.map(s=>[s.url,s])).values()]};}
+// 로컬 결정론적 검증기(지명/건강권고/무역통계/최저임금)의 결과를 EvidenceResult로 변환한다.
+// 예전엔 issue.phrase/reason을 버리고 sources만 뽑아써서, 화면의 "주의해서 볼 표현"·
+// "근거에 맞게 고치면" 박스가 이 경로에서는 절대 채워지지 않던 버그가 있었다.
+function conflict(claim:Claim,summary:string,issues:EvidenceIssue[]):EvidenceResult{
+  const sources=[...new Map(issues.flatMap(i=>i.sources).map(s=>[s.url,s])).values()];
+  return{
+    status:"evidence",claim,assessment:"conflict",summary,
+    problematicPart:issues.map(i=>i.phrase).join(", ")||undefined,
+    correction:issues.map(i=>i.reason).join(" ")||undefined,
+    sources,
+  };
+}
 function parse(raw:string):Payload{const match=raw.match(/\{[\s\S]*\}/);if(!match)return{};try{return JSON.parse(match[0]) as Payload;}catch{return{};}}
 function errorMessage(error:unknown){return error instanceof Error?error.message:String(error);}

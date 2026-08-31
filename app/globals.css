@@ -118,6 +118,7 @@ textarea::placeholder, input::placeholder { color: #9aa4b3; }
 .result-status { display: flex; align-items: center; color: var(--status); font-size: 12px; font-weight: 800; }
 .result-status i { width: 20px; height: 20px; display: grid; place-items: center; margin-right: 6px; border-radius: 50%; background: var(--status); color: white; font-size: 11px; font-style: normal; }
 .result-card h3 { margin: 16px 0; font-size: 18px; line-height: 1.55; }
+.claim-wrong { background: #fde2e1; color: #9e3030; font-weight: 800; text-decoration: line-through; text-decoration-thickness: 2px; padding: 0 3px; border-radius: 3px; }
 .verdict-box { padding: 16px 18px; border-radius: 7px; background: var(--pale); }
 .verdict-box strong { color: var(--status); font-size: 14px; }
 .verdict-box p { margin: 7px 0 0; color: #596579; font-size: 13px; line-height: 1.65; }
