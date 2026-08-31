@@ -11,7 +11,7 @@ export async function matchClaim(
   return matchClaimFallback(claim, candidates);
 }
 
-// Claude 키가 없을 때를 위한 단순 키워드 겹침 폴백 매칭.
+// AI GMS 키가 없을 때를 위한 단순 키워드 겹침 폴백 매칭.
 // "matched"로 뜨면 화면에 고신뢰(🔴/🟢)로 표시되므로 오탐 비용이 매우 크다 — 실측 결과
 // "모두/있는/것으로/나타났다"처럼 아무 기사에나 나오는 기능어만 겹쳐도 비율 임계값(0.3)을
 // 넘겨 전혀 무관한 정부 문서와 매칭되는 버그가 있었다(예: "역대 최고 인상폭에도... 반발"

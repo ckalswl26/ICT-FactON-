@@ -6,12 +6,12 @@ export interface ClaimExtractionResult { claims: Claim[]; diagnostic: PipelineDi
 
 export async function extractClaims(text: string): Promise<ClaimExtractionResult> {
   const client = getAnthropicClient();
-  if (!client) return { claims: extractClaimsHeuristic(text), diagnostic: { stage: "claim_extraction", status: "unavailable", message: "Claude API 키가 없어 규칙 기반으로 주장을 추출했습니다." } };
+  if (!client) return { claims: extractClaimsHeuristic(text), diagnostic: { stage: "claim_extraction", status: "unavailable", message: "AI GMS API 키가 없어 규칙 기반으로 주장을 추출했습니다." } };
   try {
     const claims = await extractClaimsWithClaude(client, text);
-    return { claims, diagnostic: { stage: "claim_extraction", status: "ok", message: "Claude가 검증 가능한 주장을 추출했습니다." } };
+    return { claims, diagnostic: { stage: "claim_extraction", status: "ok", message: "AI GMS가 검증 가능한 주장을 추출했습니다." } };
   } catch (error) {
-    return { claims: extractClaimsHeuristic(text), diagnostic: { stage: "claim_extraction", status: "failed", message: "Claude 주장 추출에 실패해 규칙 기반 분석으로 전환했습니다.", detail: errorMessage(error) } };
+    return { claims: extractClaimsHeuristic(text), diagnostic: { stage: "claim_extraction", status: "failed", message: "AI GMS 주장 추출에 실패해 규칙 기반 분석으로 전환했습니다.", detail: errorMessage(error) } };
   }
 }
 
@@ -23,9 +23,9 @@ async function extractClaimsWithClaude(client: Anthropic, text: string): Promise
     messages: [{ role: "user", content: text }],
   });
   const block = response.content.find(item => item.type === "text");
-  if (!block || block.type !== "text") throw new Error("Claude 응답에 텍스트가 없습니다.");
+  if (!block || block.type !== "text") throw new Error("AI GMS 응답에 텍스트가 없습니다.");
   const match = block.text.match(/\[[\s\S]*\]/);
-  if (!match) throw new Error("Claude 응답에서 JSON 배열을 찾지 못했습니다.");
+  if (!match) throw new Error("AI GMS 응답에서 JSON 배열을 찾지 못했습니다.");
   const parsed = JSON.parse(match[0]) as { text?: string }[];
   const claims = parsed.filter(item => item.text?.trim()).slice(0, 5).map((item, index) => ({ id: `claim-${index + 1}`, text: item.text!.trim() }));
   if (!claims.length) throw new Error("추출된 주장이 없습니다.");

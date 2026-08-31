@@ -18,7 +18,7 @@ export async function verifyWithGemmaEvidence(claim: Claim, evidence: SearchEvid
   const apiKey = process.env.GEMINI_API_KEY;
   const model = process.env.GEMINI_MODEL || "gemma-4-26b-a4b-it";
   if (!apiKey || !model.startsWith("gemma-")) {
-    return { diagnostic: { stage: "gemma_analysis", status: "unavailable", message: "Gemma 판정 모델이 설정되지 않았습니다." } };
+    return { diagnostic: { stage: "gemma_analysis", status: "unavailable", message: "AI GMS 판정 모델이 설정되지 않았습니다." } };
   }
 
   const sources = evidence.slice(0, 6);
@@ -34,12 +34,12 @@ export async function verifyWithGemmaEvidence(claim: Claim, evidence: SearchEvid
       // 요약해 비교하는 훨씬 긴 프롬프트라 15초로는 자주 타임아웃됐다.
       signal: AbortSignal.timeout(30000),
       body: JSON.stringify({
-        contents: [{ parts: [{ text: `아래 검색 자료만 사용해 주장을 검증하세요. Gemma가 직접 검색했다고 말하지 마세요. 직접 근거가 부족하면 insufficient로 판정하세요. JSON만 출력하세요.\n\n주장:\n${claim.text}\n\n검색 자료:\n${sourceText}\n\n형식: {"assessment":"supported|conflict|insufficient","summary":"비교 결과","problematicPart":"문제 표현 또는 빈 문자열","correction":"교정 문장 또는 빈 문자열","sourceIndexes":[1,2]}` }] }],
+        contents: [{ parts: [{ text: `아래 검색 자료만 사용해 주장을 검증하세요. AI가 직접 검색했다고 말하지 마세요. 직접 근거가 부족하면 insufficient로 판정하세요. JSON만 출력하세요.\n\n주장:\n${claim.text}\n\n검색 자료:\n${sourceText}\n\n형식: {"assessment":"supported|conflict|insufficient","summary":"비교 결과","problematicPart":"문제 표현 또는 빈 문자열","correction":"교정 문장 또는 빈 문자열","sourceIndexes":[1,2]}` }] }],
         generationConfig: { temperature: 0.1, maxOutputTokens: 768 },
       }),
     });
     const data = await response.json() as { candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>; error?: { message?: string } };
-    if (!response.ok) throw new Error(data.error?.message || `Gemma HTTP ${response.status}`);
+    if (!response.ok) throw new Error(data.error?.message || `AI GMS HTTP ${response.status}`);
     const raw = data.candidates?.[0]?.content?.parts?.map((part) => part.text || "").join("\n") || "";
     const payload = parsePayload(raw);
     const assessment = payload.assessment === "supported" || payload.assessment === "conflict" ? payload.assessment : "insufficient";
@@ -57,10 +57,10 @@ export async function verifyWithGemmaEvidence(claim: Claim, evidence: SearchEvid
         correction: assessment === "insufficient" ? undefined : payload.correction?.trim() || undefined,
         sources: visibleSources,
       },
-      diagnostic: { stage: "gemma_analysis", status: "ok", message: `Gemma가 외부 검색 자료 ${visibleSources.length}건을 비교했습니다.` },
+      diagnostic: { stage: "gemma_analysis", status: "ok", message: `AI GMS가 외부 검색 자료 ${visibleSources.length}건을 비교했습니다.` },
     };
   } catch (error) {
-    return { diagnostic: { stage: "gemma_analysis", status: "failed", message: "Gemma의 검색 자료 판정에 실패했습니다.", detail: error instanceof Error ? error.message : String(error) } };
+    return { diagnostic: { stage: "gemma_analysis", status: "failed", message: "AI GMS의 검색 자료 판정에 실패했습니다.", detail: error instanceof Error ? error.message : String(error) } };
   }
 }
 

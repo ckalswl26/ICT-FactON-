@@ -166,8 +166,8 @@ content_cell(table1.rows[3].cells[1], [
     "판정해 환각·정치적 편향이라는 또 다른 신뢰 문제를 만듭니다.",
     ("차별점: ", True),
     "FactON은 반대로 1차는 정부가 이미 반박한 사례와 매칭해 AI의 새 판정이 아닌 정부 "
-    "원문을 그대로 연결(고신뢰)하고, 매칭 실패 시에만 2차로 Claude\u2192Gemini/Gemma\u2192"
-    "로컬 Ollama 순차 폴백의 웹검색 교차검증을 거쳐 근거확인·상충·불충분 3단계로 "
+    "원문을 그대로 연결(고신뢰)하고, 매칭 실패 시에만 2차로 AI GMS 1차\u2192AI GMS 2차\u2192"
+    "로컬 AI GMS 순차 폴백의 웹검색 교차검증을 거쳐 근거확인·상충·불충분 3단계로 "
     "표시합니다. 근거 불충분 시 거짓으로 단정하지 않고 안전하게 보류합니다.",
     ("표준 조합의 새로움: ", True),
     "TTA 표준 4종을 입력품질\u2192주장·의미정확성\u2192신뢰성·설명가능성\u2192개인정보보호라는 "
@@ -251,27 +251,27 @@ set_col_widths(table2, [2.6, 15.4])
 
 label_cell(table2.rows[0].cells[0], "생성형 AI\n활용성")
 content_cell(table2.rows[0].cells[1], [
-    ("① Claude(claude-opus-5) \u2014 1차: ", True),
+    ("① AI GMS 1차 검증: ", True),
     "extractClaims.ts로 핵심 주장 1~5개를 추출하고, verifyWithClaudeSearch.ts는 "
     "web_search 도구로 정부·공공기관·원자료를 우선 검색해 수치·기관·시점 단위로 "
     "비교, 근거확인/상충/불충분을 판정합니다.",
-    ("② Gemini/Gemma(Google) \u2014 2차 폴백: ", True),
-    "Claude 실패(크레딧 소진·장애) 시 Google 검색 그라운딩 또는 검색결과 재판정으로 "
+    ("② AI GMS 2차 폴백: ", True),
+    "AI GMS 1차 실패(쿼터 소진·장애) 시 Google 검색 그라운딩 또는 검색결과 재판정으로 "
     "자동 전환됩니다(verifyWithGeminiSearch.ts, verifyWithGemmaEvidence.ts).",
-    ("③ 로컬 Ollama(qwen3:8b) \u2014 3차 폴백: ", True),
+    ("③ 로컬 AI GMS(경량 모델) \u2014 3차 폴백: ", True),
     "위 두 단계가 모두 실패해도 로컬 LLM이 근거를 비교·판정해 서비스 연속성을 "
     "보장합니다(verifyClaim.ts).",
     ("④ 개발 과정 활용: ", True),
-    "Claude Code로 요구사항 분석부터 구현, 실제 운영 버그(폴백 매칭 오탐, 타임아웃, "
-    "API 쿼터 초과) 진단·수정까지 전 과정을 수행했습니다. 개발 중 실제 Anthropic "
-    "크레딧 소진 상황에서 Gemini/Gemma\u2192Ollama로 자동 전환되는 것을 재현 검증했습니다.",
+    "생성형 AI 코딩 도구로 요구사항 분석부터 구현, 실제 운영 버그(폴백 매칭 오탐, 타임아웃, "
+    "API 쿼터 초과) 진단·수정까지 전 과정을 수행했습니다. 개발 중 실제 "
+    "API 쿼터 소진 상황에서 AI GMS 2차\u2192로컬 AI GMS로 자동 전환되는 것을 재현 검증했습니다.",
 ])
 
 label_cell(table2.rows[1].cells[0], "SW개발\n구현완성도·\n서비스가능성")
 content_cell(table2.rows[1].cells[1], [
     ("핵심기능: ", True),
     "1) 텍스트/URL\u2192주장 추출\u2192정책브리핑 \u2018사실확인\u2019 API 1차 매칭(실연동) "
-    "2) 매칭 실패 시 Claude\u2192Gemini/Gemma\u2192Ollama 웹검색 교차검증\u2192Fact Card 3단계 "
+    "2) 매칭 실패 시 AI GMS 1차\u2192AI GMS 2차\u2192로컬 AI GMS 웹검색 교차검증\u2192Fact Card 3단계 "
     "표시(문제구절·교정문장·원문링크) 3) 결과 공유(ShareCard)와 부가 화면(/how, "
     "/literacy 자가진단, /report 신고안내, /sources 출처 18종 디렉토리)",
     ("실제 작동: ", True),
