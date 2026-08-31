@@ -111,10 +111,10 @@ docs/                       # 공모전 기획서 생성 스크립트 및 파이
 
 | 표준 번호 | 표준명 | 적용 부분 |
 |---|---|---|
-| TTAK.KO-10.1344-Part2 | 빅데이터 품질관리 프레임워크(비정형 데이터 품질지표) | `lib/quality/checkInputQuality.ts` — 입력 품질 확인 |
-| TTAK.KO-10.1419 | 한국어 음성·텍스트 의미적 정확성 품질검증 방법 | `lib/claims/extractClaims.ts`, `lib/evidence/verifyClaim.ts` — 주장·근거 연결, 근거 불충분 시 보류 |
-| TTAK.KO-10.1497 | AI 시스템 신뢰성 제고를 위한 요구사항 | `app/api/analyze/route.ts`의 diagnostics, 화면의 '검증 품질 체크' 패널 |
-| TTAK.KO-12.0414 | AI 서비스 개인정보보호 프레임워크 | `lib/privacy/maskPII.ts` — 개인정보 마스킹, 원문 미저장 |
+| TTAK.KO-10.1344-Part2 | 유통·활용 데이터 점검 방법 - 제2부: 비정형 데이터 품질지표 | `lib/quality/checkInputQuality.ts` — 입력 품질 확인 |
+| TTAK.KO-10.1419 | 한국어 음성 및 텍스트 데이터의 의미적 정확성 품질검증 방법 | `lib/claims/extractClaims.ts`, `lib/evidence/verifyClaim.ts` — 주장·근거 연결, 근거 불충분 시 보류 |
+| TTAK.KO-10.1497 | 인공지능 시스템 신뢰성 제고를 위한 요구사항 | `app/api/analyze/route.ts`의 diagnostics, 화면의 '검증 품질 체크' 패널 |
+| TTAK.KO-12.0414 | 인공지능(AI) 서비스 개인정보보호 프레임워크 | `lib/privacy/maskPII.ts` — 개인정보 마스킹, 원문 미저장 |
 
 ---
 
