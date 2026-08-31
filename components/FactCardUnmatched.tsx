@@ -7,18 +7,20 @@ const labels = {
   insufficient: { title: "근거 불충분", lead: "검색은 완료됐지만 판단할 직접 근거가 충분하지 않습니다.", symbol: "?" },
 } as const;
 
-// problematicPart가 주장 문장 안에 그대로 들어있으면 빨간 취소선으로 표시해,
-// 어디가 왜 틀렸는지 문장만 보고도 바로 알 수 있게 한다.
+// problematicPart(쉼표로 여러 개일 수 있음)가 주장 문장 안에 그대로 들어있으면 빨간
+// 취소선으로 표시해, 어디가 왜 틀렸는지 문장만 보고도 바로 알 수 있게 한다.
+function escapeRegExp(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 function renderClaimText(text: string, problematicPart?: string) {
   if (!problematicPart) return text;
-  const parts = text.split(problematicPart);
-  if (parts.length < 2) return text;
-  return parts.map((part, i) => (
-    <Fragment key={i}>
-      {part}
-      {i < parts.length - 1 && <mark className="claim-wrong">{problematicPart}</mark>}
-    </Fragment>
-  ));
+  const phrases = [...new Set(problematicPart.split(", ").map((p) => p.trim()).filter(Boolean))];
+  if (!phrases.length) return text;
+  const pattern = new RegExp(`(${phrases.map(escapeRegExp).join("|")})`, "g");
+  return text.split(pattern).map((part, i) =>
+    phrases.includes(part) ? <mark className="claim-wrong" key={i}>{part}</mark> : <Fragment key={i}>{part}</Fragment>
+  );
 }
 
 export default function FactCardUnmatched({ result, index }: { result: EvidenceResult; index: number }) {

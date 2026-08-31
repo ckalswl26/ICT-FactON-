@@ -4,6 +4,7 @@ import { verifyContextualPlaces } from "./verifyKoreanPlaces";
 import { verifyHighDoseCoffeeAdvice } from "./trustedEvidenceCatalog";
 import { verifyJuly2026TradeStatistics } from "./verifyTradeStatistics";
 import { verifyMinimumWage2027 } from "./verifyMinimumWage";
+import { verifyAlbaSurvey } from "./verifyAlbaSurvey";
 import { verifyWithClaudeSearch } from "./verifyWithClaudeSearch";
 import { verifyWithGeminiSearch } from "./verifyWithGeminiSearch";
 import { verifyWithGemmaEvidence } from "./verifyWithGemmaEvidence";
@@ -17,6 +18,7 @@ export async function verifyClaim(claim:Claim,documentText=claim.text):Promise<V
   const health=verifyHighDoseCoffeeAdvice(claim.text); if(health.length)return{result:conflict(claim,"건강·안전 권고와 일치하지 않는 표현이 확인됐습니다.",health),diagnostics:[]};
   const trade=verifyJuly2026TradeStatistics(claim.text,documentText); if(trade.length)return{result:conflict(claim,"공식 무역 통계의 수치와 일치하지 않습니다.",trade),diagnostics:[]};
   const minWage=verifyMinimumWage2027(claim.text,documentText); if(minWage.length)return{result:conflict(claim,"공식 고시된 최저임금 금액과 일치하지 않습니다.",minWage),diagnostics:[]};
+  const albaSurvey=verifyAlbaSurvey(claim.text,documentText); if(albaSurvey.length)return{result:conflict(claim,"설문조사 출처 또는 수치가 실제 발표 내용과 일치하지 않습니다.",albaSurvey),diagnostics:[]};
 
   const claude=await verifyWithClaudeSearch(claim,documentText); if(claude.result)return{result:claude.result,diagnostics:[claude.diagnostic]};
   const usesGemma=(process.env.GEMINI_MODEL||"").startsWith("gemma-");
