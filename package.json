@@ -6,15 +6,20 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "healthcheck": "node scripts/healthcheck.mjs"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.121.0",
+    "@mozilla/readability": "^0.6.0",
+    "jsdom": "^30.0.1",
     "next": "16.3.3",
     "react": "19.2.8",
     "react-dom": "19.2.8"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@types/jsdom": "^30.0.0",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

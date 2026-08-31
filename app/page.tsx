@@ -1,69 +1,22 @@
-import Image from "next/image";
-
+"use client";
+import { useEffect, useMemo, useState } from "react";
+import InputForm from "@/components/InputForm"; import MatchingProgress from "@/components/MatchingProgress"; import FactCardMatched from "@/components/FactCardMatched"; import FactCardUnmatched from "@/components/FactCardUnmatched"; import FactCardError from "@/components/FactCardError"; import ShareCard from "@/components/ShareCard"; import SiteHeader from "@/components/SiteHeader"; import { AnalyzeResponse, InputType, ClaimResult } from "@/lib/types";
+type Stage = "input" | "result"; type Filter = "all" | "supported" | "conflict" | "insufficient" | "error"; type HistoryItem = { text: string; date: string; count: number };
+const verdictOf = (r: ClaimResult): Exclude<Filter, "all"> => r.status === "error" ? "error" : r.status === "matched" ? (r.verdict === "conflict" ? "conflict" : "supported") : r.assessment === "supported" || r.assessment === "conflict" || r.assessment === "insufficient" ? r.assessment : "insufficient";
 export default function Home() {
-  return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
-  );
+  const [stage, setStage] = useState<Stage>("input"); const [data, setData] = useState<AnalyzeResponse | null>(null); const [error, setError] = useState<string | null>(null); const [loading, setLoading] = useState(false); const [filter, setFilter] = useState<Filter>("all"); const [history, setHistory] = useState<HistoryItem[]>([]);
+  useEffect(() => { try { setHistory(JSON.parse(localStorage.getItem("facton-history") || "[]")); } catch {} }, []);
+  async function handleSubmit(type: InputType, content: string) { setLoading(true); setError(null); try { const res = await fetch("/api/analyze", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ type, content }) }); const json = await res.json(); if (!res.ok) throw new Error(json.error ?? "분석에 실패했습니다. 잠시 후 다시 시도해 주세요."); const result = json as AnalyzeResponse; setData(result); setStage("result"); const next = [{ text: content.slice(0, 58), date: new Date().toLocaleDateString("ko-KR"), count: result.results.length }, ...history].slice(0, 4); setHistory(next); localStorage.setItem("facton-history", JSON.stringify(next)); } catch (e) { const message = e instanceof TypeError && /fetch/i.test(e.message) ? "분석 서버와 연결이 끊겼습니다. 페이지를 새로고침한 뒤 다시 시도해 주세요." : e instanceof Error ? e.message : "알 수 없는 오류가 발생했습니다."; setError(message); } finally { setLoading(false); } }
+  const reset = () => { setStage("input"); setData(null); setError(null); setFilter("all"); window.scrollTo({ top: 0, behavior: "smooth" }); };
+  const counts = useMemo(() => data ? data.results.reduce((a, r) => ({ ...a, [verdictOf(r)]: a[verdictOf(r)] + 1 }), { supported: 0, conflict: 0, insufficient: 0, error: 0 }) : { supported: 0, conflict: 0, insufficient: 0, error: 0 }, [data]);
+  const shown = data?.results.filter(r => filter === "all" || verdictOf(r) === filter) || [];
+  return <div className="site-shell"><a className="skip-link" href="#main-content">본문 바로가기</a>
+    <SiteHeader onHome={reset} />
+    <main id="main-content"><section className="hero"><div className="hero-grid"><div className="hero-content"><p className="eyebrow"><span>PUBLIC EVIDENCE</span> AI FACT CHECK</p><h1>당신이 마주한 정보,<br /><strong>믿을 수 있을까요?</strong></h1><p className="hero-copy">뉴스와 메시지 속 주장을 공식 자료와 공개 근거에 비춰봅니다.<br className="desktop-break" /> 판단은 더 선명하게, 출처는 더 투명하게.</p><div className="principle-row"><span><b>01</b> 주장 자동 분리</span><span><b>02</b> 다중 출처 비교</span><span><b>03</b> 근거 중심 설명</span></div></div><div className="hero-visual" aria-hidden="true"><div className="radar"><i /><i /><i /><span>FACT<br /><b>ON</b></span><em className="signal one">공식자료</em><em className="signal two">교차검증</em><em className="signal three">출처확인</em></div></div></div></section>
+    <section className="workspace-section"><div className="workspace-grid"><div className="primary-panel">
+      {stage === "input" && !loading && <><InputForm onSubmit={handleSubmit} loading={loading} />{error && <div className="error-message" role="alert">{error}</div>}</>}{stage === "input" && loading && <MatchingProgress />}
+      {stage === "result" && data && <div className="results-view"><div className="results-heading"><div><p className="section-kicker">ANALYSIS COMPLETE</p><h2>{data.results.length}개 주장의 근거를 확인했습니다</h2></div><button onClick={reset} className="reset-button">＋ 새로 확인하기</button></div><div className="result-summary"><button className={filter === "all" ? "active" : ""} onClick={() => setFilter("all")}><small>전체 주장</small><strong>{data.results.length}</strong></button><button className={filter === "supported" ? "active good" : "good"} onClick={() => setFilter("supported")}><small>근거 확인</small><strong>{counts.supported}</strong></button><button className={filter === "conflict" ? "active bad" : "bad"} onClick={() => setFilter("conflict")}><small>상충</small><strong>{counts.conflict}</strong></button><button className={filter === "insufficient" ? "active warn" : "warn"} onClick={() => setFilter("insufficient")}><small>불충분</small><strong>{counts.insufficient}</strong></button>{counts.error>0&&<button className={filter === "error" ? "active error" : "error"} onClick={() => setFilter("error")}><small>검증 오류</small><strong>{counts.error}</strong></button>}</div>{data.qualityWarning && <div className="warning-message">{data.qualityWarning}</div>}<div className="result-list">{shown.map((r, i) => r.status === "error" ? <FactCardError key={r.claim.id} result={r} index={i+1}/>:r.status === "matched" ? <FactCardMatched key={r.claim.id} result={r} index={i + 1} /> : <FactCardUnmatched key={r.claim.id} result={r} index={i + 1} />)}</div><section className="tta-panel"><div><p className="section-kicker">QUALITY STANDARD</p><h2>검증 품질 체크</h2></div><span>{data.ttaChecks?.filter(c => c.status === "applied").length || 0}/{data.ttaChecks?.length || 0} 기준 충족</span><div className="tta-check-list">{data.ttaChecks?.map(c => <article className={`tta-check ${c.status}`} key={c.standard}><i>{c.status === "applied" ? "✓" : "!"}</i><div><strong>{c.title}</strong><p>{c.detail}</p><small>{c.standard} · {c.clause}</small></div></article>)}</div></section><ShareCard results={data.results} /></div>}
+    </div><aside className="guide-panel"><div className="side-card trust-card"><div className="guide-title"><span>◎</span><div><small>FACTON TRUST</small><h2>투명한 검증 원칙</h2></div></div><div className="trust-score"><strong>3</strong><span>가지 원칙을<br />모든 분석에 적용</span></div><ul><li><i>✓</i><span><strong>근거 우선</strong>추측으로 단정하지 않아요</span></li><li><i>✓</i><span><strong>출처 공개</strong>원문 링크를 함께 보여줘요</span></li><li><i>✓</i><span><strong>표현 교정</strong>오해 없는 문장을 제안해요</span></li></ul></div><div className="side-card history-card"><div className="side-heading"><h3>최근 분석</h3>{history.length > 0 && <button onClick={() => { setHistory([]); localStorage.removeItem("facton-history"); }}>지우기</button>}</div>{history.length ? history.map((h, i) => <div className="history-item" key={`${h.text}-${i}`}><span>⌁</span><div><strong>{h.text}</strong><small>{h.date} · 주장 {h.count}개</small></div></div>) : <div className="empty-history"><span>◷</span><p>분석을 시작하면<br />최근 기록이 여기에 표시돼요.</p></div>}</div></aside></div></section>
+    </main>
+    <footer className="site-footer"><div><strong>FactON</strong><span>근거가 켜지는 순간</span></div><p>본 서비스는 의사결정을 돕는 참고 도구입니다. 중요한 판단 전에는 출처 원문을 확인해 주세요.</p></footer></div>;
 }

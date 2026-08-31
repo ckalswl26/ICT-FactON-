@@ -32,6 +32,7 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.local.example
 
 # vercel
 .vercel
@@ -39,3 +40,8 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local-only scratch/dataset (not part of the app; too large for GitHub)
+/tmp/
+/146.낚시성 기사 탐지 데이터/
+/docs/proposal_preview.pdf

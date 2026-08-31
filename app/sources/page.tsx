@@ -1,0 +1,24 @@
+"use client";
+import { useMemo, useState } from "react"; import SiteHeader from "@/components/SiteHeader";
+type Kind = "all" | "policy" | "news"; type Source = { name: string; type: Exclude<Kind, "all">; group: string; desc: string; url: string; mark: string };
+const sources: Source[] = [
+  { name: "대한민국 정책브리핑", type: "policy", group: "정부 종합", desc: "전 부처 정책뉴스, 보도자료와 브리핑 원문", url: "https://www.korea.kr/", mark: "정책" },
+  { name: "사실은 이렇습니다", type: "policy", group: "정부 팩트체크", desc: "정부 정책 관련 오해와 보도에 대한 공식 설명", url: "https://www.korea.kr/briefing/actuallyList.do", mark: "확인" },
+  { name: "정부24 정책정보", type: "policy", group: "행정·생활", desc: "중앙부처와 지자체의 정책·기관 소식", url: "https://www.gov.kr/portal/ntnadmNews", mark: "정부" },
+  { name: "국민참여입법센터", type: "policy", group: "법령·입법", desc: "입법예고와 행정예고를 확인하고 의견 제출", url: "https://opinion.lawmaking.go.kr/", mark: "입법" },
+  { name: "국회 의안정보", type: "policy", group: "국회·법안", desc: "발의 법안 원문과 심사 진행 상황 확인", url: "https://likms.assembly.go.kr/bill/main.do", mark: "국회" },
+  { name: "공공데이터포털", type: "policy", group: "통계·데이터", desc: "정부와 공공기관이 개방한 데이터 원자료", url: "https://www.data.go.kr/", mark: "DATA" },
+  { name: "연합뉴스", type: "news", group: "통신사", desc: "국내외 속보와 분야별 뉴스", url: "https://www.yna.co.kr/", mark: "연합" },
+  { name: "KBS 뉴스", type: "news", group: "방송", desc: "공영방송의 국내외 뉴스와 팩트체크", url: "https://news.kbs.co.kr/", mark: "KBS" },
+  { name: "MBC 뉴스", type: "news", group: "방송", desc: "정치·사회·경제 및 탐사보도", url: "https://imnews.imbc.com/", mark: "MBC" },
+  { name: "SBS 뉴스", type: "news", group: "방송", desc: "분야별 뉴스와 사실은 코너", url: "https://news.sbs.co.kr/", mark: "SBS" },
+  { name: "JTBC 뉴스", type: "news", group: "종합편성", desc: "이슈별 뉴스와 탐사·기획보도", url: "https://news.jtbc.co.kr/", mark: "JTBC" },
+  { name: "한겨레", type: "news", group: "신문", desc: "정치·사회·경제·국제 분야 뉴스", url: "https://www.hani.co.kr/", mark: "한겨레" },
+  { name: "경향신문", type: "news", group: "신문", desc: "분야별 뉴스와 기획·탐사보도", url: "https://www.khan.co.kr/", mark: "경향" },
+  { name: "조선일보", type: "news", group: "신문", desc: "국내외 뉴스와 오피니언", url: "https://www.chosun.com/", mark: "조선" },
+  { name: "중앙일보", type: "news", group: "신문", desc: "정치·경제·사회 및 데이터 뉴스", url: "https://www.joongang.co.kr/", mark: "중앙" },
+  { name: "동아일보", type: "news", group: "신문", desc: "국내외 주요 뉴스와 기획 콘텐츠", url: "https://www.donga.com/", mark: "동아" },
+  { name: "한국일보", type: "news", group: "신문", desc: "정치·사회·경제와 심층 기획", url: "https://www.hankookilbo.com/", mark: "한국" },
+  { name: "서울신문", type: "news", group: "신문", desc: "정책·사회·지역 및 국제 뉴스", url: "https://www.seoul.co.kr/", mark: "서울" },
+];
+export default function SourcesPage() { const [kind, setKind] = useState<Kind>("all"); const [query, setQuery] = useState(""); const shown = useMemo(() => sources.filter(s => (kind === "all" || s.type === kind) && `${s.name} ${s.group} ${s.desc}`.toLowerCase().includes(query.toLowerCase())), [kind, query]); return <div className="site-shell"><SiteHeader /><main><section className="source-hero"><div><p>POLICY & NEWS DIRECTORY</p><h1>정책과 뉴스를<br /><strong>한곳에서 더 깊게</strong></h1><span>요약에 머물지 말고 정부 원문과 여러 언론사의 보도를 직접 비교해 보세요.</span></div><div className="source-search"><label htmlFor="source-query">찾고 싶은 기관이나 분야</label><div><span>⌕</span><input id="source-query" value={query} onChange={e => setQuery(e.target.value)} placeholder="예: 입법, 방송, 공공데이터" /></div><small>외부 사이트는 새 창에서 열립니다.</small></div></section><section className="source-directory"><div className="directory-head"><div><p className="section-kicker">TRUSTED SOURCES</p><h2>원문 확인 바로가기</h2></div><div className="source-tabs" role="tablist"><button className={kind === "all" ? "active" : ""} onClick={() => setKind("all")}>전체 <b>{sources.length}</b></button><button className={kind === "policy" ? "active" : ""} onClick={() => setKind("policy")}>정부·정책 <b>{sources.filter(s => s.type === "policy").length}</b></button><button className={kind === "news" ? "active" : ""} onClick={() => setKind("news")}>언론사 <b>{sources.filter(s => s.type === "news").length}</b></button></div></div><div className="source-guide"><span>읽는 순서</span><p><b>① 정부 원문 확인</b><i>→</i><b>② 두 곳 이상 보도 비교</b><i>→</i><b>③ 통계·법안 원자료 확인</b></p></div>{shown.length ? <div className="source-grid">{shown.map(source => <a href={source.url} target="_blank" rel="noreferrer" className={`source-card ${source.type}`} key={source.name}><div className="source-mark">{source.mark}</div><div className="source-info"><span>{source.group}</span><h3>{source.name}</h3><p>{source.desc}</p></div><i>↗</i></a>)}</div> : <div className="source-empty">검색 결과가 없습니다. 다른 검색어를 입력해 보세요.</div>}<div className="balance-note"><span>i</span><div><strong>한 곳의 정보만으로 결론 내리지 마세요</strong><p>정부 사이트는 정책의 공식 내용과 원문을 확인하는 데 유용하고, 언론 보도는 정책의 영향과 다양한 관점을 이해하는 데 도움이 됩니다. 사실과 의견을 구분하고 서로 다른 출처를 함께 비교하세요.</p></div></div></section></main></div>; }
